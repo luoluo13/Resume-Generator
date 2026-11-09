@@ -1,0 +1,22 @@
+{
+  "id": "vermilion",
+  "name": "丹 · 朱印封面",
+  "description": "整幅强调色抬头压住版面，分节标题做成朱印标签，视觉强烈但正文克制。",
+  "tags": ["强对比", "朱印"],
+  "color": "#b03a24",
+  "order": 8,
+  "serifHeading": true,
+  "supports": { "columns": [1], "photo": true, "divider": ["block", "line", "none"] },
+  "variants": [
+    {
+      "key": "seal",
+      "label": "封面样式",
+      "description": "强调色抬头的填充方式",
+      "options": [
+        { "value": "solid", "label": "实色" },
+        { "value": "outline", "label": "描边" }
+      ],
+      "default": "solid"
+    }
+  ]
+}

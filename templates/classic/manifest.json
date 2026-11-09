@@ -1,0 +1,23 @@
+{
+  "id": "classic",
+  "name": "笺 · 单栏经典",
+  "description": "单栏、信息密度适中，衬线标题配朱砂分隔线，适合大多数中文岗位。",
+  "tags": ["单栏", "经典"],
+  "color": "#bf4a2e",
+  "order": 1,
+  "serifHeading": true,
+  "supports": { "columns": [1, 2], "photo": true, "divider": ["line", "block", "none"] },
+  "variants": [
+    {
+      "key": "header",
+      "label": "抬头样式",
+      "description": "姓名区的边框与底色",
+      "options": [
+        { "value": "line", "label": "细线" },
+        { "value": "plain", "label": "无框" },
+        { "value": "boxed", "label": "底块" }
+      ],
+      "default": "line"
+    }
+  ]
+}

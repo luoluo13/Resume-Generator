@@ -1,0 +1,22 @@
+{
+  "id": "academic",
+  "name": "雅 · 衬线学术",
+  "description": "居中式衬线抬头与编号分节，通栏两端对齐，适合科研、教育与体制内岗位。",
+  "tags": ["衬线", "学术"],
+  "color": "#4a4a46",
+  "order": 5,
+  "serifHeading": true,
+  "supports": { "columns": [1, 2], "photo": true, "divider": ["line", "block", "none"] },
+  "variants": [
+    {
+      "key": "header",
+      "label": "抬头对齐",
+      "description": "姓名与联系方式的对齐方式",
+      "options": [
+        { "value": "center", "label": "居中" },
+        { "value": "left", "label": "左对齐" }
+      ],
+      "default": "center"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{% import "_shared.html" as shared %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>{{ resume.basics.name }} · 简历</title>
+<style>{{ css|safe }}</style>
+</head>
+<body>
+<div class="page" data-divider="{{ theme.dividerStyle }}" data-photo="{{ theme.photoPosition }}" data-columns="{{ theme.columns }}" data-density="{{ theme.density }}" data-header="{{ variants.header }}">
+  <header class="ahead">
+    {% if theme.photoPosition != 'none' and resume.basics.photo %}
+    <div class="a-photo {{ 'is-left' if theme.photoPosition == 'left' else '' }}"><img src="{{ photo_url }}" alt=""></div>
+    {% endif %}
+    <p class="a-eyebrow">CURRICULUM VITAE</p>
+    <h1>{{ resume.basics.name }}</h1>
+    {% if resume.basics.jobIntention %}<p class="a-intent">{{ resume.basics.jobIntention }}</p>{% endif %}
+    <div class="a-contact">{{ shared.contact_items(resume.basics) }}</div>
+  </header>
+  <div class="a-rule"></div>
+  <div class="a-body">
+    {% for section in resume.sections if section.visible %}
+      {{ shared.section(section, loop.index) }}
+    {% endfor %}
+  </div>
+</div>
+</body>
+</html>

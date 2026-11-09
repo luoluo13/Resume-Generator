@@ -1,0 +1,23 @@
+{
+  "id": "timeline",
+  "name": "序 · 时间轴",
+  "description": "以左侧时间轴串联经历，日期与内容分列，节奏清晰、适合经历连贯的求职者。",
+  "tags": ["时间轴", "叙事"],
+  "color": "#8a6a3b",
+  "order": 4,
+  "serifHeading": true,
+  "supports": { "columns": [1], "photo": true, "divider": ["line", "none"] },
+  "variants": [
+    {
+      "key": "nodes",
+      "label": "节点样式",
+      "description": "时间轴节点的形状与填充",
+      "options": [
+        { "value": "ring", "label": "空心" },
+        { "value": "solid", "label": "实心" },
+        { "value": "square", "label": "方形" }
+      ],
+      "default": "ring"
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{% macro contact_items(basics) -%}
+{% if basics.phone %}<span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h4l2 5-3 2a13 13 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 2 6a2 2 0 0 1 2-2z"/></svg>{{ basics.phone }}</span>{% endif %}
+{% if basics.email %}<span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>{{ basics.email }}</span>{% endif %}
+{% if basics.city %}<span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>{{ basics.city }}</span>{% endif %}
+{% if basics.available %}<span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>{{ basics.available }}到岗</span>{% endif %}
+{% if basics.yearsOfExperience %}<span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h7v14H4zM13 10h7v10h-7z"/></svg>{{ basics.yearsOfExperience }}经验</span>{% endif %}
+{%- endmacro %}
+
+{% macro date_range(item) -%}
+{% if item.start or item.end or item.current %}<span class="entry-date">{{ item.start }}{% if item.end or item.current %} – {{ '至今' if item.current else item.end }}{% endif %}</span>{% endif %}
+{%- endmacro %}
+
+{% macro highlights(item) -%}
+{% if item.highlights %}<ul class="entry-list">{% for hl in item.highlights %}<li>{{ hl|safe }}</li>{% endfor %}</ul>{% endif %}
+{%- endmacro %}
+
+{% macro tech_row(item) -%}
+{% if item.tech %}<div class="tech-row">{% for tech in item.tech %}<span class="tech">{{ tech }}</span>{% endfor %}</div>{% endif %}
+{%- endmacro %}
+
+{% macro items(section) -%}
+{% if section.type == 'education' %}
+  {% for item in section['items'] %}
+  <div class="entry">
+    <div class="entry-top"><span class="entry-name">{{ item.school }}</span><span class="entry-sub">{{ item.degree }}{% if item.major %} · {{ item.major }}{% endif %}</span>{{ date_range(item) }}</div>
+    {% if item.gpa or item.courses %}<div class="entry-note">{% if item.gpa %}GPA {{ item.gpa }}{% endif %}{% if item.gpa and item.courses %} · {% endif %}{{ item.courses }}</div>{% endif %}
+  </div>
+  {% endfor %}
+{% elif section.type == 'experience' %}
+  {% for item in section['items'] %}
+  <div class="entry">
+    <div class="entry-top"><span class="entry-name">{{ item.company }}</span><span class="entry-sub">{{ item.role }}</span>{% if item.location %}<span class="entry-place">{{ item.location }}</span>{% endif %}{{ date_range(item) }}</div>
+    {{ highlights(item) }}
+  </div>
+  {% endfor %}
+{% elif section.type == 'project' %}
+  {% for item in section['items'] %}
+  <div class="entry">
+    <div class="entry-top"><span class="entry-name">{{ item.name }}</span>{% if item.role %}<span class="entry-sub">{{ item.role }}</span>{% endif %}{{ date_range(item) }}</div>
+    {{ tech_row(item) }}
+    {{ highlights(item) }}
+    {% if item.link %}<div class="entry-note"><a href="{{ item.link }}">{{ item.link }}</a></div>{% endif %}
+  </div>
+  {% endfor %}
+{% elif section.type == 'skills' %}
+  {% for item in section['items'] %}
+  <div class="skill-row"><span class="skill-key">{{ item.group }}</span><span class="tag-list">{% for tag in item.tags %}<span class="tag">{{ tag }}</span>{% endfor %}</span></div>
+  {% endfor %}
+{% elif section.type in ('awards', 'certificate') %}
+  {% for item in section['items'] %}
+  <div class="award-row"><span class="award-name">{{ item.name }}</span>{% if item.issuer %}<span class="award-issuer">{{ item.issuer }}</span>{% endif %}<span class="award-date">{{ item.date }}</span></div>
+  {% endfor %}
+{% else %}
+  {% for item in section['items'] %}
+  <div class="entry">
+    {% if item.title or item.start or item.end %}<div class="entry-top"><span class="entry-name">{{ item.title }}</span>{% if item.subtitle %}<span class="entry-sub">{{ item.subtitle }}</span>{% endif %}{{ date_range(item) }}</div>{% endif %}
+    {{ highlights(item) }}
+  </div>
+  {% endfor %}
+{% endif %}
+{%- endmacro %}
+
+{% macro section(section, num=None, en=True) -%}
+{% set en_map = {'education':'EDUCATION','experience':'EXPERIENCE','project':'PROJECTS','skills':'SKILLS','awards':'HONORS','certificate':'CERTIFICATES'} %}
+<section class="sec sec-{{ section.type }}">
+  <h2 class="sec-title">
+    {% if num %}<span class="sec-num">{{ '%02d'|format(num) }}</span>{% endif %}
+    <span class="sec-cn">{{ section.title }}</span>
+    {% if en and en_map.get(section.type) %}<span class="sec-en">{{ en_map.get(section.type) }}</span>{% endif %}
+  </h2>
+  <div class="sec-body">{{ items(section) }}</div>
+</section>
+{%- endmacro %}

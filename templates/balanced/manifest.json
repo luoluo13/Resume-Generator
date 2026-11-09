@@ -1,0 +1,22 @@
+{
+  "id": "balanced",
+  "name": "衡 · 双栏均衡",
+  "description": "左窄栏承载照片、联系方式与技能，右主栏展开经历，信息分区清晰。",
+  "tags": ["双栏", "均衡"],
+  "color": "#2f5d62",
+  "order": 3,
+  "serifHeading": true,
+  "supports": { "columns": [2], "photo": true, "divider": ["line", "none"] },
+  "variants": [
+    {
+      "key": "side",
+      "label": "侧栏位置",
+      "description": "联系方式与技能所在的方位",
+      "options": [
+        { "value": "left", "label": "左侧" },
+        { "value": "right", "label": "右侧" }
+      ],
+      "default": "left"
+    }
+  ]
+}

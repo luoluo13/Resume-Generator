@@ -1,0 +1,63 @@
+{% import "_shared.html" as shared %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>{{ resume.basics.name }} · 简历</title>
+<style>{{ css|safe }}</style>
+</head>
+<body>
+<div class="page" data-divider="{{ theme.dividerStyle }}" data-photo="{{ theme.photoPosition }}" data-density="{{ theme.density }}" data-nodes="{{ variants.nodes }}">
+  <header class="thead">
+    <div class="t-id">
+      <h1>{{ resume.basics.name }}</h1>
+      {% if resume.basics.jobIntention %}<p class="t-intent">{{ resume.basics.jobIntention }}</p>{% endif %}
+    </div>
+    <div class="t-contact">{{ shared.contact_items(resume.basics) }}</div>
+    {% if theme.photoPosition != 'none' and resume.basics.photo %}
+    <div class="t-photo"><img src="{{ photo_url }}" alt=""></div>
+    {% endif %}
+  </header>
+
+  <div class="t-body">
+  {% for section in resume.sections if section.visible %}
+    <section class="sec">
+      <h2 class="sec-title"><span class="t-index">{{ '%02d'|format(loop.index) }}</span>{{ section.title }}</h2>
+      <div class="t-list">
+      {% for item in section['items'] %}
+        {% if section.type in ('education', 'experience', 'project') %}
+        <div class="t-entry">
+          <div class="t-date"><span>{{ item.start }}</span>{% if item.end or item.current %}<span class="t-arrow">↓</span><span>{{ '至今' if item.current else item.end }}</span>{% endif %}</div>
+          <div class="t-node"></div>
+          <div class="t-content">
+            <div class="t-head">
+              <strong>{{ item.company or item.school or item.name }}</strong>
+              <span>{% if section.type == 'education' %}{{ item.degree }}{% if item.degree and item.major %} · {% endif %}{{ item.major }}{% else %}{{ item.role }}{% endif %}</span>
+            </div>
+            {% if item.location %}<div class="t-meta">{{ item.location }}</div>{% endif %}
+            {% if item.gpa or item.courses %}<div class="t-meta">{% if item.gpa %}GPA {{ item.gpa }}{% endif %}{% if item.gpa and item.courses %} · {% endif %}{{ item.courses }}</div>{% endif %}
+            {% if item.tech %}<div class="t-tech">{% for tech in item.tech %}<span>{{ tech }}</span>{% endfor %}</div>{% endif %}
+            {{ shared.highlights(item) }}
+          </div>
+        </div>
+        {% elif section.type == 'skills' %}
+        <div class="t-entry t-skill">
+          <div class="t-date t-key">{{ item.group }}</div>
+          <div class="t-node"></div>
+          <div class="t-content"><span class="tag-list">{% for tag in item.tags %}<span class="tag">{{ tag }}</span>{% endfor %}</span></div>
+        </div>
+        {% else %}
+        <div class="t-entry">
+          <div class="t-date">{{ item.date }}</div>
+          <div class="t-node"></div>
+          <div class="t-content"><div class="t-head"><strong>{{ item.name }}</strong>{% if item.issuer %}<span>{{ item.issuer }}</span>{% endif %}</div></div>
+        </div>
+        {% endif %}
+      {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "id": "minimal",
+  "name": "白 · 极简留白",
+  "description": "超大字号姓名、细线分隔与大量留白，克制的黑白灰，适合设计与产品岗位。",
+  "tags": ["极简", "留白"],
+  "color": "#1f1f1f",
+  "order": 6,
+  "serifHeading": false,
+  "supports": { "columns": [1], "photo": true, "divider": ["none", "line", "block"] },
+  "variants": [
+    {
+      "key": "name",
+      "label": "姓名样式",
+      "description": "姓名下方的装饰线",
+      "options": [
+        { "value": "rule", "label": "短线" },
+        { "value": "wide", "label": "通栏" },
+        { "value": "plain", "label": "无" }
+      ],
+      "default": "rule"
+    }
+  ]
+}

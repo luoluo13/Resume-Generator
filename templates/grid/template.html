@@ -1,0 +1,33 @@
+{% import "_shared.html" as shared %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>{{ resume.basics.name }} · 简历</title>
+<style>{{ css|safe }}</style>
+</head>
+<body>
+<div class="page" data-divider="{{ theme.dividerStyle }}" data-photo="{{ theme.photoPosition }}" data-density="{{ theme.density }}" data-cards="{{ variants.cards }}">
+  <header class="mast">
+    <div class="mast-bar"><span class="mast-mark">R</span><span class="mast-label">RESUME / PORTFOLIO</span></div>
+    <h1>{{ resume.basics.name }}</h1>
+    <div class="mast-foot">
+      {% if resume.basics.jobIntention %}<span class="mast-intent">{{ resume.basics.jobIntention }}</span>{% endif %}
+      <div class="mast-contact">{{ shared.contact_items(resume.basics) }}</div>
+    </div>
+    {% if theme.photoPosition != 'none' and resume.basics.photo %}
+    <img class="mast-photo" src="{{ photo_url }}" alt="">
+    {% endif %}
+  </header>
+
+  <div class="gbody">
+    {% for section in resume.sections if section.visible %}
+    <section class="sec g-card g-{{ section.type }}">
+      <h2 class="sec-title"><span class="g-index">{{ '%02d'|format(loop.index) }}</span>{{ section.title }}</h2>
+      <div class="sec-body">{{ shared.items(section) }}</div>
+    </section>
+    {% endfor %}
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,35 @@
+{% import "_shared.html" as shared %}
+{% set side_types = ['skills', 'awards', 'certificate'] %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>{{ resume.basics.name }} · 简历</title>
+<style>{{ css|safe }}</style>
+</head>
+<body>
+<div class="page" data-divider="{{ theme.dividerStyle }}" data-photo="{{ theme.photoPosition }}" data-density="{{ theme.density }}">
+  <div class="layout" data-side="{{ variants.side }}">
+    <aside class="side">
+      {% if theme.photoPosition != 'none' and resume.basics.photo %}
+      <div class="side-photo"><img src="{{ photo_url }}" alt=""></div>
+      {% endif %}
+      <h1>{{ resume.basics.name }}</h1>
+      {% if resume.basics.jobIntention %}<p class="side-intent">{{ resume.basics.jobIntention }}</p>{% endif %}
+      <div class="side-contact">{{ shared.contact_items(resume.basics) }}</div>
+      {% for section in resume.sections if section.visible and section.type in side_types %}
+      <div class="side-sec">
+        <h2 class="side-title">{{ section.title }}</h2>
+        {{ shared.items(section) }}
+      </div>
+      {% endfor %}
+    </aside>
+    <main class="main">
+      {% for section in resume.sections if section.visible and section.type not in side_types %}
+        {{ shared.section(section) }}
+      {% endfor %}
+    </main>
+  </div>
+</div>
+</body>
+</html>

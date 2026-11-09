@@ -1,0 +1,23 @@
+{
+  "id": "compact",
+  "name": "简 · 紧凑单页",
+  "description": "高密度单栏，左侧色条与双列技能排列，适合内容较多仍要压进一页的场景。",
+  "tags": ["紧凑", "单页"],
+  "color": "#3f6b52",
+  "order": 2,
+  "serifHeading": false,
+  "supports": { "columns": [1, 2], "photo": true, "divider": ["line", "none"] },
+  "variants": [
+    {
+      "key": "marker",
+      "label": "标题标记",
+      "description": "模块标题前的装饰",
+      "options": [
+        { "value": "bar", "label": "色条" },
+        { "value": "dot", "label": "圆点" },
+        { "value": "none", "label": "无" }
+      ],
+      "default": "bar"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "grid",
+  "name": "格 · 杂志网格",
+  "description": "黑色刊头搭配卡片式网格分节，强调结构感与现代编辑气质，适合互联网与创意岗位。",
+  "tags": ["网格", "现代"],
+  "color": "#1d1b17",
+  "order": 7,
+  "serifHeading": false,
+  "supports": { "columns": [1], "photo": true, "divider": ["none", "line"] },
+  "variants": [
+    {
+      "key": "cards",
+      "label": "卡片样式",
+      "description": "分节卡片的边框与底色",
+      "options": [
+        { "value": "bordered", "label": "描边" },
+        { "value": "tinted", "label": "浅色块" },
+        { "value": "flat", "label": "无框" }
+      ],
+      "default": "bordered"
+    }
+  ]
+}
