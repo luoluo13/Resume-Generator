@@ -117,8 +117,23 @@ def _error_message(body: bytes, status: int) -> str:
         data = json.loads(text)
         error = data.get("error")
         message = error.get("message") if isinstance(error, dict) else data.get("message")
+        detail = ""
+        if isinstance(error, dict):
+            metadata = error.get("metadata")
+            if isinstance(metadata, dict):
+                raw = str(metadata.get("raw") or "").strip()
+                provider = str(metadata.get("provider_name") or "").strip()
+                if raw:
+                    detail = raw
+                    if "region" in raw.lower():
+                        detail = f"{raw}（当前网络所在地区不可用，请更换模型或调整网络环境）"
+                if provider:
+                    detail = f"{detail}（来源：{provider}）" if detail else f"来源：{provider}"
         if message:
-            return f"接口返回 {status}：{str(message)[:200]}"
+            suffix = f"；{detail}" if detail and detail not in str(message) else ""
+            return f"接口返回 {status}：{str(message)[:200]}{suffix[:200]}"
+        if detail:
+            return f"接口返回 {status}：{detail[:200]}"
     except json.JSONDecodeError:
         pass
     if status == 401:
@@ -151,8 +166,19 @@ def test_connection(config: dict[str, Any]) -> dict[str, Any]:
             return {"ok": False, "message": "请填写以 http:// 或 https:// 开头的接口地址"}
         if not str(config.get("model") or "").strip():
             return {"ok": False, "message": "请填写模型名称"}
+    model = str(config.get("model") or "").strip()
     try:
         _request_json(_endpoint(base, "/models"), _headers(config), None, 20)
+        _request_json(
+            _endpoint(base, "/chat/completions"),
+            _headers(config),
+            {
+                "model": model,
+                "messages": [{"role": "user", "content": "ping"}],
+                "max_tokens": 8,
+            },
+            60,
+        )
     except ChatError as exc:
         return {"ok": False, "message": str(exc)}
     return {"ok": True, "message": "连接成功，可以开始对话"}
