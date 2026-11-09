@@ -1,4 +1,4 @@
-import type { ExportResult, Resume, SystemInfo, TemplateManifest } from "./types";
+import type { ExportResult, ImportApplyPayload, ImportDraft, Resume, SystemInfo, TemplateManifest } from "./types";
 
 export const TEMPLATE_PACK_URL = "/api/templates/pack";
 
@@ -42,6 +42,19 @@ export const api = {
     form.append("file", file);
     return request<Resume>("/api/resume/import", { method: "POST", body: form });
   },
+
+  analyzeImport: async (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return request<ImportDraft>("/api/import/analyze", { method: "POST", body: form });
+  },
+
+  applyImport: (payload: ImportApplyPayload) =>
+    request<Resume>("/api/import/apply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    }),
 
   importTemplate: async (file: File) => {
     const form = new FormData();

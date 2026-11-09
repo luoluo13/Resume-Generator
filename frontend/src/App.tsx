@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { EditorView } from "./components/EditorView";
 import { EnvPanel } from "./components/EnvPanel";
 import { ExportPanel } from "./components/ExportPanel";
+import { ImportWizard } from "./components/ImportWizard";
 import { StatusBar } from "./components/StatusBar";
 import { ThemeDrawer } from "./components/ThemeDrawer";
 import { Toasts } from "./components/Toasts";
@@ -31,6 +32,7 @@ export function App() {
         ui.setThemeOpen(false);
         ui.setExportOpen(false);
         ui.setEnvOpen(false);
+        ui.setImportOpen(false);
       }
     };
     window.addEventListener("keydown", handler);
@@ -74,6 +76,7 @@ export function App() {
       <ThemeDrawer />
       <ExportPanel />
       <EnvPanel />
+      <ImportWizard />
       <Toasts />
     </div>
   );

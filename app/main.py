@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import DATA_DIR, FRONTEND_DIST, VERSION, ensure_dirs, runtime_port
-from app.routers import assets, export, resume, system, templates
+from app.routers import assets, export, importer, resume, system, templates
 
 ensure_dirs()
 
@@ -13,6 +13,7 @@ app = FastAPI(title="简历工坊 Resume Studio", version=VERSION, docs_url=None
 
 app.include_router(system.router)
 app.include_router(resume.router)
+app.include_router(importer.router)
 app.include_router(assets.router)
 app.include_router(templates.router)
 app.include_router(export.router)

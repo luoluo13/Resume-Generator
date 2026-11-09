@@ -77,6 +77,48 @@ export interface Resume {
   theme: Theme;
 }
 
+export interface ImportItem {
+  headline: string;
+  meta: string;
+  period: string;
+  bullets: string[];
+  tags: string[];
+}
+
+export interface ImportSection {
+  id: string;
+  title: string;
+  type: SectionType;
+  confidence: number;
+  items: ImportItem[];
+}
+
+export interface ImportBasics {
+  name: string;
+  jobIntention: string;
+  phone: string;
+  email: string;
+  city: string;
+  yearsOfExperience: string;
+  available: string;
+}
+
+export interface ImportDraft {
+  file: { name: string; kind: string; size: number; pages: number };
+  basics: ImportBasics;
+  sections: ImportSection[];
+  style: { template: string; reason: string; theme: Theme };
+  warnings: string[];
+  stats: { blocks: number; characters: number; items: number; entries: number; maxSize: number; bodySize: number };
+}
+
+export interface ImportApplyPayload {
+  basics: ImportBasics;
+  sections: ImportSection[];
+  theme: Theme;
+  sourceName: string;
+}
+
 export interface VariantOption {
   value: string;
   label: string;

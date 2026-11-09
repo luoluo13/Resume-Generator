@@ -73,6 +73,9 @@ class ResumeStore:
     def export_snapshot(self) -> str:
         return json.dumps(self.load(), ensure_ascii=False, indent=2)
 
+    def snapshot(self) -> None:
+        self._snapshot()
+
     def _snapshot(self) -> None:
         if not self.file.exists():
             return

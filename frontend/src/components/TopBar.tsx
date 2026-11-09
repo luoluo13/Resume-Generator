@@ -10,6 +10,7 @@ export function TopBar() {
   const setThemeOpen = useUiStore((state) => state.setThemeOpen);
   const setExportOpen = useUiStore((state) => state.setExportOpen);
   const setEnvOpen = useUiStore((state) => state.setEnvOpen);
+  const setImportOpen = useUiStore((state) => state.setImportOpen);
   const saveState = useResumeStore((state) => state.saveState);
   const saveError = useResumeStore((state) => state.saveError);
   const saveNow = useResumeStore((state) => state.saveNow);
@@ -106,6 +107,17 @@ export function TopBar() {
           </button>
           {menuOpen ? (
             <div className="menu">
+              <button
+                type="button"
+                className="menu-item"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setImportOpen(true);
+                }}
+              >
+                <IconUpload size={15} />
+                导入已有简历（DOC / PDF）
+              </button>
               <button type="button" className="menu-item" onClick={exportJson}>
                 <IconDownload size={15} />
                 导出 JSON 备份
