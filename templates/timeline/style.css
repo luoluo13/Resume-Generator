@@ -35,7 +35,6 @@
 .entry-list{margin:.28em 0 0}
 .entry-list li{position:relative;padding-left:.95em;margin-bottom:.18em;font-size:.78em;line-height:1.68;color:#3a3730}
 .entry-list li:last-child{margin-bottom:0}
-.entry-list li::before{content:"";position:absolute;left:.05em;top:.63em;width:.3em;height:.08em;background:var(--accent);opacity:.7}
 .entry-list strong{color:#1f1d19}
 .t-skill .t-content{padding-top:.15em}
 .t-key{font-family:var(--font-body);font-size:.76em;font-weight:700;color:#3d3932;padding-top:.15em}

@@ -6,7 +6,6 @@ PROFILE = {
     "section_en": False,
     "numbered": False,
     "dense": False,
-    "bullet": "dot",
     "serif": True,
     "sidebar_types": ("skills", "awards", "certificate"),
 }

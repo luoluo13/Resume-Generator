@@ -33,7 +33,6 @@
 .entry-list{margin:.35em 0 0}
 .entry-list li{position:relative;padding-left:1em;margin-bottom:.26em;font-size:.8em;color:#3a3730;line-height:1.7}
 .entry-list li:last-child{margin-bottom:0}
-.entry-list li::before{content:"";position:absolute;left:.1em;top:.62em;width:.3em;height:.3em;border-radius:1px;background:var(--accent);opacity:.75}
 .entry-list strong{font-weight:700;color:#1f1d19}
 .entry-list a{color:var(--accent);border-bottom:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}
 

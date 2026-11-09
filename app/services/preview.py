@@ -25,20 +25,21 @@ BASE_CSS = Template(
   --lh:$lh;
   --gap:$gap;
   --columns:$columns;
-  --margin:$margin_mm mm;
+  --margin:${margin_mm}mm;
   --font-body:$font_body;
   --font-head:$font_head;
 }
 html{background:#fff}
 body{margin:0;padding:0;background:#fff;color:var(--ink);
   font-family:var(--font-body);font-size:var(--fs);line-height:var(--lh);
+  overflow-wrap:break-word;
   -webkit-font-smoothing:antialiased;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 img{max-width:100%;display:block}
 a{color:var(--accent);text-decoration:none}
 ul,ol{margin:0;padding:0;list-style:none}
 p{margin:0}
 .page{
-  position:relative;width:210mm;min-height:297mm;margin:0 auto;padding:$margin_mm mm;
+  position:relative;width:210mm;min-height:297mm;margin:0 auto;padding:${margin_mm}mm;
   background:#fff;overflow:visible;
 }
 .page::after{
@@ -54,7 +55,7 @@ p{margin:0}
   .page::after{display:none}
   .page-break{break-after:page}
 }
-@page{size:A4;margin:0}
+@page{size:A4;margin:${margin_mm}mm}
 """
 )
 

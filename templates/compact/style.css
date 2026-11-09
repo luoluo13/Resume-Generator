@@ -30,7 +30,6 @@
 .entry-note{margin-top:.1em;font-size:.72em;color:#7b756a}
 .entry-list{margin:.2em 0 0}
 .entry-list li{position:relative;display:block;padding-left:.9em;margin-bottom:.12em;font-size:.78em;line-height:1.62;color:#3a3730}
-.entry-list li::before{content:"·";position:absolute;left:.15em;top:-.02em;color:var(--accent);font-weight:700}
 
 .tech-row{display:flex;flex-wrap:wrap;gap:.25em;margin-top:.2em}
 .tech{font-size:.66em;color:#5f5a50;background:#f4f0e6;border-radius:3px;padding:.07em .42em}

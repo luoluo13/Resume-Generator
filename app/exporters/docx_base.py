@@ -187,6 +187,9 @@ def contact_line(basics: dict) -> str:
         basics.get("city", ""),
         f"{basics['available']}到岗" if basics.get("available") else "",
         f"{basics['yearsOfExperience']}经验" if basics.get("yearsOfExperience") else "",
+        basics.get("gender", ""),
+        f"{basics['birth']}出生" if basics.get("birth") else "",
+        basics.get("political", ""),
     ]
     return "  ·  ".join(part for part in parts if part)
 
@@ -321,15 +324,9 @@ def add_bullet(container, markup: str, ctx: Ctx, profile: dict) -> None:
     text = plain_text(markup)
     if not text:
         return
-    char = {"square": "▪", "dot": "•", "dash": "—", "none": ""}.get(profile.get("bullet", "dot"), "•")
     paragraph = container.add_paragraph()
     style_paragraph(paragraph, ctx, after=ctx.font_size * 0.12, dense=profile.get("dense", False))
-    fmt = paragraph.paragraph_format
-    fmt.left_indent = Cm(0.42)
-    fmt.first_line_indent = Cm(-0.42)
-    if char:
-        bullet_run = paragraph.add_run(f"{char} ")
-        set_run(bullet_run, ctx.body_font, ctx.font_size * 0.8, color=ctx.accent)
+    paragraph.paragraph_format.left_indent = Cm(0.42)
     add_rich(paragraph, markup, ctx, ctx.font_size * 0.8)
 
 

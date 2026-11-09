@@ -105,11 +105,6 @@ export function PreviewPane() {
           </div>
         ) : null}
       </div>
-
-      <div className={`preview-foot${overflow ? " is-warn" : ""}`}>
-        <i className="dot" />
-        {overflow ? `内容约 ${pageRatio.toFixed(2)} 页，建议精简内容或切换紧凑密度` : "单页排布 · 所见即所得"}
-      </div>
     </section>
   );
 }

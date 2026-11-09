@@ -9,7 +9,6 @@ export function TopBar() {
   const setView = useUiStore((state) => state.setView);
   const setThemeOpen = useUiStore((state) => state.setThemeOpen);
   const setExportOpen = useUiStore((state) => state.setExportOpen);
-  const setEnvOpen = useUiStore((state) => state.setEnvOpen);
   const setImportOpen = useUiStore((state) => state.setImportOpen);
   const saveState = useResumeStore((state) => state.saveState);
   const saveError = useResumeStore((state) => state.saveError);
@@ -75,15 +74,6 @@ export function TopBar() {
         </button>
         <button type="button" className={view === "templates" ? "is-active" : ""} onClick={() => setView("templates")}>
           模板中心
-        </button>
-        <button type="button" onClick={() => setThemeOpen(true)}>
-          主题设置
-        </button>
-        <button type="button" onClick={() => setExportOpen(true)}>
-          导出
-        </button>
-        <button type="button" onClick={() => setEnvOpen(true)}>
-          运行环境
         </button>
       </nav>
 

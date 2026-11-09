@@ -6,7 +6,6 @@ PROFILE = {
     "section_en": False,
     "numbered": True,
     "dense": False,
-    "bullet": "dash",
     "serif": False,
 }
 

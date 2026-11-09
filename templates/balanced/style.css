@@ -42,7 +42,6 @@
 .entry-list{margin:.28em 0 0}
 .entry-list li{position:relative;padding-left:.95em;margin-bottom:.2em;font-size:.79em;line-height:1.68;color:#3a3730}
 .entry-list li:last-child{margin-bottom:0}
-.entry-list li::before{content:"";position:absolute;left:.05em;top:.62em;width:.28em;height:.28em;border-radius:50%;background:var(--accent);opacity:.7}
 .entry-list strong{color:#1f1d19}
 .tech-row{display:flex;flex-wrap:wrap;gap:.25em;margin-top:.25em}
 .tech{font-size:.67em;border:1px solid var(--line);border-radius:3px;padding:.06em .42em;color:#6b6558}

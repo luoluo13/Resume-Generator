@@ -19,7 +19,6 @@ export interface Basics {
   birth: string;
   political: string;
   photo: string;
-  show: Record<string, boolean>;
 }
 
 export interface Item {

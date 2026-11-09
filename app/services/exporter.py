@@ -80,7 +80,7 @@ class ExportService:
     async def _run(self, fmt: str, resume: dict, theme: dict, url: str, base: str) -> dict:
         if fmt == "pdf":
             output = self._target(base, ".pdf")
-            await export_pdf(url, output, int(theme.get("pageMargin", 18)))
+            await export_pdf(url, output)
             files = [output]
         elif fmt == "png":
             output = self._target(base, ".png")

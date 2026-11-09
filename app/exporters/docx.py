@@ -12,7 +12,6 @@ GENERIC_PROFILE = {
     "section_en": True,
     "numbered": False,
     "dense": False,
-    "bullet": "dot",
     "serif": False,
 }
 

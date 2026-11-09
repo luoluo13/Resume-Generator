@@ -15,7 +15,6 @@ def sample_resume() -> dict:
             "available": "一个月内",
             "yearsOfExperience": "5 年",
             "photo": "",
-            "show": {"photo": False, "gender": False, "birth": False, "political": False},
         },
         "sections": [
             {

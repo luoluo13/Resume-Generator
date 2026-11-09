@@ -4,6 +4,9 @@
 {% if basics.city %}<span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>{{ basics.city }}</span>{% endif %}
 {% if basics.available %}<span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>{{ basics.available }}到岗</span>{% endif %}
 {% if basics.yearsOfExperience %}<span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h7v14H4zM13 10h7v10h-7z"/></svg>{{ basics.yearsOfExperience }}经验</span>{% endif %}
+{% if basics.gender %}<span class="ci">{{ basics.gender }}</span>{% endif %}
+{% if basics.birth %}<span class="ci">{{ basics.birth }}出生</span>{% endif %}
+{% if basics.political %}<span class="ci">{{ basics.political }}</span>{% endif %}
 {%- endmacro %}
 
 {% macro date_range(item) -%}

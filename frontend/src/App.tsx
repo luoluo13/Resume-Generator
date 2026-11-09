@@ -1,9 +1,7 @@
 import { useEffect } from "react";
 import { EditorView } from "./components/EditorView";
-import { EnvPanel } from "./components/EnvPanel";
 import { ExportPanel } from "./components/ExportPanel";
 import { ImportWizard } from "./components/ImportWizard";
-import { StatusBar } from "./components/StatusBar";
 import { ThemeDrawer } from "./components/ThemeDrawer";
 import { Toasts } from "./components/Toasts";
 import { TopBar } from "./components/TopBar";
@@ -31,7 +29,6 @@ export function App() {
         const ui = useUiStore.getState();
         ui.setThemeOpen(false);
         ui.setExportOpen(false);
-        ui.setEnvOpen(false);
         ui.setImportOpen(false);
       }
     };
@@ -72,10 +69,8 @@ export function App() {
     <div className="app">
       <TopBar />
       <main className="app-main">{view === "editor" ? <EditorView /> : <TemplatesView />}</main>
-      <StatusBar />
       <ThemeDrawer />
       <ExportPanel />
-      <EnvPanel />
       <ImportWizard />
       <Toasts />
     </div>

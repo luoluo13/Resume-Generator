@@ -4,7 +4,7 @@ import { IconImage, IconUpload, IconUser } from "../icons";
 import { useResumeStore } from "../store";
 import type { Basics } from "../types";
 import { toast } from "../ui";
-import { Field, TextInput, Toggle } from "./fields";
+import { TextInput } from "./fields";
 
 export function BasicForm() {
   const resume = useResumeStore((state) => state.resume);
@@ -21,12 +21,6 @@ export function BasicForm() {
     });
   };
 
-  const setShow = (key: string, value: boolean) => {
-    update((draft) => {
-      draft.basics.show = { ...draft.basics.show, [key]: value };
-    });
-  };
-
   const uploadPhoto = async (file?: File) => {
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
@@ -37,7 +31,6 @@ export function BasicForm() {
       const result = await api.uploadPhoto(file);
       update((draft) => {
         draft.basics.photo = result.path;
-        draft.basics.show = { ...draft.basics.show, photo: true };
       });
       toast("success", "照片已更新");
     } catch (error) {
@@ -75,6 +68,15 @@ export function BasicForm() {
             placeholder="5 年"
             onChange={(value) => setField("yearsOfExperience", value)}
           />
+          <TextInput label="性别" value={basics.gender} maxLength={10} placeholder="选填" onChange={(value) => setField("gender", value)} />
+          <TextInput label="出生年月" value={basics.birth} maxLength={20} placeholder="如：1997.03" onChange={(value) => setField("birth", value)} />
+          <TextInput
+            label="政治面貌"
+            value={basics.political}
+            maxLength={20}
+            placeholder="如：中共党员"
+            onChange={(value) => setField("political", value)}
+          />
         </div>
 
         <div className="form-divider">简历照片</div>
@@ -99,7 +101,6 @@ export function BasicForm() {
                   移除
                 </button>
               ) : null}
-              <Toggle label="在简历中显示" checked={Boolean(basics.show.photo)} onChange={(value) => setShow("photo", value)} />
             </div>
           </div>
           <input
@@ -112,25 +113,6 @@ export function BasicForm() {
               event.target.value = "";
             }}
           />
-        </div>
-
-        <div className="form-divider">可选信息</div>
-        <div className="field-grid">
-          <TextInput label="性别" value={basics.gender} maxLength={10} placeholder="选填" onChange={(value) => setField("gender", value)} />
-          <TextInput label="出生年月" value={basics.birth} maxLength={20} placeholder="如：1997.03" onChange={(value) => setField("birth", value)} />
-          <Field label="政治面貌">
-            <input
-              value={basics.political}
-              maxLength={20}
-              placeholder="选填"
-              onChange={(event) => setField("political", event.target.value)}
-            />
-          </Field>
-        </div>
-        <div className="toggle-row">
-          <Toggle label="显示性别" checked={Boolean(basics.show.gender)} onChange={(value) => setShow("gender", value)} />
-          <Toggle label="显示出生年月" checked={Boolean(basics.show.birth)} onChange={(value) => setShow("birth", value)} />
-          <Toggle label="显示政治面貌" checked={Boolean(basics.show.political)} onChange={(value) => setShow("political", value)} />
         </div>
 
         {info && !info.fonts.ready ? (

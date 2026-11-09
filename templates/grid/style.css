@@ -33,7 +33,6 @@
 .entry-list{margin:.22em 0 0}
 .entry-list li{position:relative;padding-left:.85em;margin-bottom:.14em;font-size:.75em;line-height:1.62;color:#3a3730}
 .entry-list li:last-child{margin-bottom:0}
-.entry-list li::before{content:"";position:absolute;left:0;top:.58em;width:.32em;height:.12em;background:var(--accent)}
 .entry-list strong{color:#1f1d19}
 .tech-row{display:flex;flex-wrap:wrap;gap:.22em;margin-top:.2em}
 .tech{font-size:.64em;border:1px solid var(--line);border-radius:2px;padding:.04em .38em;color:#6b6558}

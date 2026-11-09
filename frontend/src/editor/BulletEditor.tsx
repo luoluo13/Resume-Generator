@@ -56,7 +56,6 @@ export function BulletEditor({ value, onChange, onRemove }: BulletEditorProps) {
 
   return (
     <div className="bullet-row">
-      <i className="bullet-dot" />
       <div className="bullet-main">
         <EditorContent editor={editor} className="bullet-text" />
         <div className="rt-toolbar">

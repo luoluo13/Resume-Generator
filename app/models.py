@@ -93,9 +93,6 @@ class Basics(BaseModel):
     birth: str = Field("", max_length=20)
     political: str = Field("", max_length=20)
     photo: str = ""
-    show: dict[str, bool] = Field(
-        default_factory=lambda: {"photo": True, "gender": False, "birth": False, "political": False}
-    )
 
     @field_validator("phone")
     @classmethod

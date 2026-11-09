@@ -128,7 +128,6 @@ def _map_basics(raw: dict[str, Any]) -> dict[str, Any]:
         "birth": "",
         "political": "",
         "photo": "",
-        "show": {"photo": True, "gender": False, "birth": False, "political": False},
     }
 
 

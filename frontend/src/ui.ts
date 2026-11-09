@@ -15,7 +15,6 @@ interface UiState {
   zoom: number;
   themeOpen: boolean;
   exportOpen: boolean;
-  envOpen: boolean;
   importOpen: boolean;
   toasts: ToastItem[];
   setView: (view: View) => void;
@@ -23,7 +22,6 @@ interface UiState {
   setZoom: (zoom: number) => void;
   setThemeOpen: (open: boolean) => void;
   setExportOpen: (open: boolean) => void;
-  setEnvOpen: (open: boolean) => void;
   setImportOpen: (open: boolean) => void;
   pushToast: (kind: ToastKind, message: string) => void;
   dismissToast: (id: number) => void;
@@ -37,15 +35,13 @@ export const useUiStore = create<UiState>()((set, get) => ({
   zoom: 0.78,
   themeOpen: false,
   exportOpen: false,
-  envOpen: false,
   importOpen: false,
   toasts: [],
-  setView: (view) => set({ view, themeOpen: false, exportOpen: false, envOpen: false, importOpen: false }),
+  setView: (view) => set({ view, themeOpen: false, exportOpen: false, importOpen: false }),
   setActiveSection: (activeSectionId) => set({ activeSectionId }),
   setZoom: (zoom) => set({ zoom: Math.min(1.2, Math.max(0.5, Number(zoom.toFixed(2)))) }),
   setThemeOpen: (themeOpen) => set({ themeOpen }),
   setExportOpen: (exportOpen) => set({ exportOpen }),
-  setEnvOpen: (envOpen) => set({ envOpen }),
   setImportOpen: (importOpen) => set({ importOpen }),
   pushToast: (kind, message) => {
     const id = ++toastSeed;
