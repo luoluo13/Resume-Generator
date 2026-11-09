@@ -15,9 +15,9 @@ BACKUPS_DIR = DATA_DIR / "backups"
 EXPORTS_DIR = ROOT / "exports"
 TEMPLATES_DIR = ROOT / "templates"
 USER_TEMPLATES_DIR = DATA_DIR / "templates"
+RESUMES_DIR = DATA_DIR / "resumes"
+CHATS_DIR = DATA_DIR / "chats"
 FRONTEND_DIST = ROOT / "frontend" / "dist"
-RESUME_FILE = DATA_DIR / "resume.json"
-RESUME_BACKUP = DATA_DIR / "resume.json.bak"
 
 
 def ensure_dirs() -> None:
@@ -29,6 +29,8 @@ def ensure_dirs() -> None:
         BACKUPS_DIR,
         EXPORTS_DIR,
         USER_TEMPLATES_DIR,
+        RESUMES_DIR,
+        CHATS_DIR,
     ):
         folder.mkdir(parents=True, exist_ok=True)
 

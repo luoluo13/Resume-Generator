@@ -1,13 +1,15 @@
 import { create } from "zustand";
 import { api } from "./api";
 import { createSection } from "./editor/schema";
-import type { Resume, Section, SectionType, SystemInfo, TemplateManifest, Theme } from "./types";
+import type { Resume, ResumeSummary, Section, SectionType, SystemInfo, TemplateManifest, Theme } from "./types";
 import { toast, useUiStore } from "./ui";
 
 type SaveState = "saved" | "saving" | "error";
 
 interface ResumeState {
   resume: Resume | null;
+  resumes: ResumeSummary[];
+  resumeName: string;
   templates: TemplateManifest[];
   info: SystemInfo | null;
   loading: boolean;
@@ -18,8 +20,14 @@ interface ResumeState {
   pages: number;
   pageRatio: number;
   load: () => Promise<void>;
+  loadResumes: () => Promise<void>;
+  switchResume: (id: string) => Promise<void>;
+  createResume: (name?: string) => Promise<void>;
+  renameResume: (id: string, name: string) => Promise<void>;
+  deleteResume: (id: string) => Promise<void>;
   refreshTemplates: () => Promise<void>;
   update: (mutate: (resume: Resume) => void) => void;
+  replaceResume: (resume: Resume) => void;
   saveNow: () => Promise<void>;
   setTemplate: (id: string) => void;
   setTheme: (patch: Partial<Theme>) => void;
@@ -44,6 +52,8 @@ function scheduleSave(get: () => ResumeState): void {
 
 export const useResumeStore = create<ResumeState>()((set, get) => ({
   resume: null,
+  resumes: [],
+  resumeName: "",
   templates: [],
   info: null,
   loading: true,
@@ -57,14 +67,88 @@ export const useResumeStore = create<ResumeState>()((set, get) => ({
   load: async () => {
     set({ loading: true, error: null });
     try {
-      const [resume, templates, info] = await Promise.all([api.getResume(), api.getTemplates(), api.getInfo()]);
-      set({ resume, templates, info, loading: false, previewKey: 1 });
+      const [resume, templates, info, library] = await Promise.all([
+        api.getResume(),
+        api.getTemplates(),
+        api.getInfo(),
+        api.getResumes()
+      ]);
+      set({
+        resume,
+        resumes: library.items,
+        resumeName: library.activeName,
+        templates,
+        info,
+        loading: false,
+        previewKey: 1
+      });
       if (!useUiStore.getState().activeSectionId) {
         useUiStore.getState().setActiveSection("basics");
       }
     } catch (error) {
       set({ loading: false, error: (error as Error).message });
     }
+  },
+
+  loadResumes: async () => {
+    const data = await api.getResumes();
+    set({ resumes: data.items, resumeName: data.activeName });
+  },
+
+  switchResume: async (id) => {
+    if (get().resume?.id === id) return;
+    await get().saveNow();
+    await api.activateResume(id);
+    const [resume, library] = await Promise.all([api.getResume(), api.getResumes()]);
+    set((state) => ({
+      resume,
+      resumes: library.items,
+      resumeName: library.activeName,
+      previewKey: state.previewKey + 1,
+      saveState: "saved",
+      saveError: ""
+    }));
+    useUiStore.getState().setActiveSection("basics");
+  },
+
+  createResume: async (name) => {
+    await get().saveNow();
+    const result = await api.createResume(name);
+    set((state) => ({
+      resume: result.resume,
+      resumes: result.items,
+      resumeName: result.activeName,
+      previewKey: state.previewKey + 1,
+      saveState: "saved",
+      saveError: ""
+    }));
+    useUiStore.getState().setActiveSection("basics");
+  },
+
+  renameResume: async (id, name) => {
+    const result = await api.renameResume(id, name);
+    set((state) => ({
+      resumes: result.items,
+      resumeName: state.resume?.id === id ? result.item.name : state.resumeName
+    }));
+  },
+
+  deleteResume: async (id) => {
+    const result = await api.deleteResume(id);
+    if (get().resume?.id !== id) {
+      set({ resumes: result.items, resumeName: result.activeName });
+      return;
+    }
+    const resume = await api.getResume();
+    set((state) => ({
+      resume,
+      resumes: result.items,
+      resumeName: result.activeName,
+      previewKey: state.previewKey + 1,
+      saveState: "saved",
+      saveError: ""
+    }));
+    useUiStore.getState().setActiveSection("basics");
   },
 
   refreshTemplates: async () => {
@@ -79,6 +163,15 @@ export const useResumeStore = create<ResumeState>()((set, get) => ({
     mutate(next);
     set({ resume: next, saveState: "saving" });
     scheduleSave(get);
+  },
+
+  replaceResume: (resume) => {
+    set((state) => ({ resume, previewKey: state.previewKey + 1, saveState: "saved", saveError: "" }));
+    const ui = useUiStore.getState();
+    const active = ui.activeSectionId;
+    if (active && active !== "basics" && !resume.sections.some((section) => section.id === active)) {
+      ui.setActiveSection(resume.sections[0]?.id ?? "basics");
+    }
   },
 
   saveNow: async () => {

@@ -1,6 +1,46 @@
 from __future__ import annotations
 
 
+def blank_resume() -> dict:
+    return {
+        "schemaVersion": 1,
+        "id": "",
+        "meta": {"createdAt": "", "updatedAt": ""},
+        "basics": {
+            "name": "",
+            "jobIntention": "",
+            "phone": "",
+            "email": "",
+            "city": "",
+            "available": "",
+            "yearsOfExperience": "",
+            "gender": "",
+            "birth": "",
+            "political": "",
+            "photo": "",
+        },
+        "sections": [
+            {"id": "sec_education", "type": "education", "title": "教育背景", "visible": True, "items": []},
+            {"id": "sec_experience", "type": "experience", "title": "工作经历", "visible": True, "items": []},
+            {"id": "sec_project", "type": "project", "title": "项目经历", "visible": True, "items": []},
+            {"id": "sec_skills", "type": "skills", "title": "专业技能", "visible": True, "items": []},
+        ],
+        "theme": {
+            "template": "classic",
+            "accent": "#bf4a2e",
+            "fontFamily": "SourceHanSansSC",
+            "fontSize": 10.5,
+            "lineHeight": 1.35,
+            "pageMargin": 18,
+            "columns": 1,
+            "photoPosition": "right",
+            "dividerStyle": "line",
+            "density": "normal",
+            "variants": {},
+        },
+    }
+
+
 def sample_resume() -> dict:
     return {
         "schemaVersion": 1,

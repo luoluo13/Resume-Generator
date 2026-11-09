@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
-import { IconChevron, IconDownload, IconFileJson, IconFolder, IconPalette, IconUpload } from "../icons";
+import {
+  IconChevron,
+  IconDownload,
+  IconFileJson,
+  IconFolder,
+  IconLayers,
+  IconPalette,
+  IconUpload,
+  IconWand
+} from "../icons";
 import { useResumeStore } from "../store";
 import { toast, useUiStore } from "../ui";
 
@@ -9,7 +18,11 @@ export function TopBar() {
   const setView = useUiStore((state) => state.setView);
   const setThemeOpen = useUiStore((state) => state.setThemeOpen);
   const setExportOpen = useUiStore((state) => state.setExportOpen);
-  const setImportOpen = useUiStore((state) => state.setImportOpen);
+  const chatOpen = useUiStore((state) => state.chatOpen);
+  const setChatOpen = useUiStore((state) => state.setChatOpen);
+  const setLibraryOpen = useUiStore((state) => state.setLibraryOpen);
+  const resumeName = useResumeStore((state) => state.resumeName);
+  const resumeCount = useResumeStore((state) => state.resumes.length);
   const saveState = useResumeStore((state) => state.saveState);
   const saveError = useResumeStore((state) => state.saveError);
   const saveNow = useResumeStore((state) => state.saveNow);
@@ -89,6 +102,16 @@ export function TopBar() {
           <span>{stateLabel}</span>
         </button>
 
+        <button
+          type="button"
+          className="btn btn-library"
+          title={`当前简历：${resumeName || "未命名"}；共 ${resumeCount} 份`}
+          onClick={() => setLibraryOpen(true)}
+        >
+          <IconLayers size={15} />
+          <span className="btn-library-name">{resumeName || "简历库"}</span>
+        </button>
+
         <div className="menu-wrap" ref={menuRef}>
           <button type="button" className="btn" onClick={() => setMenuOpen((value) => !value)}>
             <IconFileJson size={15} />
@@ -97,17 +120,6 @@ export function TopBar() {
           </button>
           {menuOpen ? (
             <div className="menu">
-              <button
-                type="button"
-                className="menu-item"
-                onClick={() => {
-                  setMenuOpen(false);
-                  setImportOpen(true);
-                }}
-              >
-                <IconUpload size={15} />
-                导入已有简历（DOC / PDF）
-              </button>
               <button type="button" className="menu-item" onClick={exportJson}>
                 <IconDownload size={15} />
                 导出 JSON 备份
@@ -131,6 +143,15 @@ export function TopBar() {
           ) : null}
         </div>
 
+        <button
+          type="button"
+          className={`btn btn-ai${chatOpen ? " is-on" : ""}`}
+          title="打开 AI 简历助手"
+          onClick={() => setChatOpen(!chatOpen)}
+        >
+          <IconWand size={15} />
+          AI 助手
+        </button>
         <button type="button" className="btn" onClick={() => setThemeOpen(true)}>
           <IconPalette size={15} />
           主题

@@ -22,13 +22,7 @@ def read_resume() -> dict:
 @router.put("")
 def save_resume(payload: Resume) -> dict:
     data = payload.model_dump(mode="json")
-    saved_at = store.save(data)
-    meta = data.setdefault("meta", {})
-    if not meta.get("createdAt"):
-        meta["createdAt"] = saved_at
-    meta["updatedAt"] = saved_at
-    store.save(data)
-    return {"savedAt": saved_at}
+    return {"savedAt": store.save(data)}
 
 
 @router.post("/import")
@@ -45,8 +39,8 @@ async def import_resume(file: UploadFile = File(...)) -> dict:
 @router.get("/export")
 def export_json() -> Response:
     data = store.export_snapshot()
-    name = store.load().get("basics", {}).get("name") or "简历"
-    filename = quote(f"{name}_resume.json")
+    name = store.active_name() or store.load().get("basics", {}).get("name") or "简历"
+    filename = quote(f"{name}.json")
     return Response(
         content=data,
         media_type="application/json; charset=utf-8",

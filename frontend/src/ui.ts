@@ -15,14 +15,16 @@ interface UiState {
   zoom: number;
   themeOpen: boolean;
   exportOpen: boolean;
-  importOpen: boolean;
+  chatOpen: boolean;
+  libraryOpen: boolean;
   toasts: ToastItem[];
   setView: (view: View) => void;
   setActiveSection: (id: string) => void;
   setZoom: (zoom: number) => void;
   setThemeOpen: (open: boolean) => void;
   setExportOpen: (open: boolean) => void;
-  setImportOpen: (open: boolean) => void;
+  setChatOpen: (open: boolean) => void;
+  setLibraryOpen: (open: boolean) => void;
   pushToast: (kind: ToastKind, message: string) => void;
   dismissToast: (id: number) => void;
 }
@@ -35,14 +37,16 @@ export const useUiStore = create<UiState>()((set, get) => ({
   zoom: 0.78,
   themeOpen: false,
   exportOpen: false,
-  importOpen: false,
+  chatOpen: false,
+  libraryOpen: false,
   toasts: [],
-  setView: (view) => set({ view, themeOpen: false, exportOpen: false, importOpen: false }),
+  setView: (view) => set({ view, themeOpen: false, exportOpen: false }),
   setActiveSection: (activeSectionId) => set({ activeSectionId }),
   setZoom: (zoom) => set({ zoom: Math.min(1.2, Math.max(0.5, Number(zoom.toFixed(2)))) }),
   setThemeOpen: (themeOpen) => set({ themeOpen }),
   setExportOpen: (exportOpen) => set({ exportOpen }),
-  setImportOpen: (importOpen) => set({ importOpen }),
+  setChatOpen: (chatOpen) => set({ chatOpen }),
+  setLibraryOpen: (libraryOpen) => set({ libraryOpen }),
   pushToast: (kind, message) => {
     const id = ++toastSeed;
     set((state) => ({ toasts: [...state.toasts, { id, kind, message }] }));

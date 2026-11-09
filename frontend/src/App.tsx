@@ -1,7 +1,8 @@
 import { useEffect } from "react";
+import { ChatPanel } from "./components/ChatPanel";
 import { EditorView } from "./components/EditorView";
 import { ExportPanel } from "./components/ExportPanel";
-import { ImportWizard } from "./components/ImportWizard";
+import { ResumeLibrary } from "./components/ResumeLibrary";
 import { ThemeDrawer } from "./components/ThemeDrawer";
 import { Toasts } from "./components/Toasts";
 import { TopBar } from "./components/TopBar";
@@ -29,7 +30,8 @@ export function App() {
         const ui = useUiStore.getState();
         ui.setThemeOpen(false);
         ui.setExportOpen(false);
-        ui.setImportOpen(false);
+        ui.setChatOpen(false);
+        ui.setLibraryOpen(false);
       }
     };
     window.addEventListener("keydown", handler);
@@ -68,10 +70,13 @@ export function App() {
   return (
     <div className="app">
       <TopBar />
-      <main className="app-main">{view === "editor" ? <EditorView /> : <TemplatesView />}</main>
+      <div className="app-body">
+        <main className="app-main">{view === "editor" ? <EditorView /> : <TemplatesView />}</main>
+        <ChatPanel />
+      </div>
       <ThemeDrawer />
       <ExportPanel />
-      <ImportWizard />
+      <ResumeLibrary />
       <Toasts />
     </div>
   );

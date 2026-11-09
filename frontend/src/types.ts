@@ -76,46 +76,85 @@ export interface Resume {
   theme: Theme;
 }
 
-export interface ImportItem {
-  headline: string;
-  meta: string;
-  period: string;
-  bullets: string[];
-  tags: string[];
+export type AiProvider = "deepseek" | "custom";
+
+export interface AiSettings {
+  provider: AiProvider;
+  baseUrl: string;
+  model: string;
+  hasKey: boolean;
+  keyHint: string;
+  models: string[];
 }
 
-export interface ImportSection {
+export interface ChatAction {
+  tool: string;
+  label: string;
+  detail: string;
+}
+
+export interface ChatPending {
+  id: string;
+  tool: string;
+  title: string;
+  summary: string;
+}
+
+export interface ChatResponse {
+  reply: string;
+  actions: ChatAction[];
+  pending: ChatPending[];
+  resume: Resume | null;
+  changed: boolean;
+  resumeId: string;
+  session?: ChatSession;
+}
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface ChatEntry extends ChatMessage {
+  id: string;
+  actions?: ChatAction[];
+}
+
+export interface ResumeSummary {
+  id: string;
+  name: string;
+  personName: string;
+  createdAt: string;
+  updatedAt: string;
+  sectionCount: number;
+  active: boolean;
+}
+
+export interface ChatSessionMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  actions: ChatAction[];
+  createdAt: string;
+}
+
+export interface ChatSession {
   id: string;
   title: string;
-  type: SectionType;
-  confidence: number;
-  items: ImportItem[];
+  resumeId: string;
+  messages: ChatSessionMessage[];
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface ImportBasics {
-  name: string;
-  jobIntention: string;
-  phone: string;
-  email: string;
-  city: string;
-  yearsOfExperience: string;
-  available: string;
-}
-
-export interface ImportDraft {
-  file: { name: string; kind: string; size: number; pages: number };
-  basics: ImportBasics;
-  sections: ImportSection[];
-  style: { template: string; reason: string; theme: Theme };
-  warnings: string[];
-  stats: { blocks: number; characters: number; items: number; entries: number; maxSize: number; bodySize: number };
-}
-
-export interface ImportApplyPayload {
-  basics: ImportBasics;
-  sections: ImportSection[];
-  theme: Theme;
-  sourceName: string;
+export interface ChatSessionSummary {
+  id: string;
+  title: string;
+  resumeId: string;
+  createdAt: string;
+  updatedAt: string;
+  messageCount: number;
+  preview: string;
 }
 
 export interface VariantOption {
