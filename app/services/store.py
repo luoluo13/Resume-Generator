@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import threading
 import uuid
@@ -11,9 +12,18 @@ from pathlib import Path
 from app.models import Resume
 from app.services.sample import blank_resume, sample_resume
 
+_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+
 
 class StoreError(Exception):
     pass
+
+
+def _check_id(resume_id: str) -> str:
+    value = str(resume_id or "").strip()
+    if not _ID_RE.fullmatch(value):
+        raise StoreError("简历标识不合法")
+    return value
 
 
 def _stamp() -> str:
@@ -49,14 +59,55 @@ class ResumeStore:
             data = json.loads(self.index_file.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             data = {}
-        items = [item for item in data.get("items", []) if isinstance(item, dict) and item.get("id")]
-        active = data.get("activeId")
+        raw_items = data.get("items") if isinstance(data, dict) else None
+        items: list[dict] = []
+        for item in raw_items if isinstance(raw_items, list) else []:
+            if not isinstance(item, dict):
+                continue
+            resume_id = str(item.get("id") or "")
+            if not _ID_RE.fullmatch(resume_id):
+                continue
+            items.append({**item, "id": resume_id})
+        active = data.get("activeId") if isinstance(data, dict) else None
         if not items:
+            items = self._scan_items()
+            if items:
+                active = items[0]["id"]
+                try:
+                    self._write_index({"activeId": active, "items": items})
+                except OSError:
+                    pass
+                return {"activeId": active, "items": items}
             self._bootstrap()
             return self._read_index()
         if active not in {item["id"] for item in items}:
             active = items[0]["id"]
         return {"activeId": active, "items": items}
+
+    def _scan_items(self) -> list[dict]:
+        """索引损坏时，从目录中现有的简历文件重建列表。"""
+        items: list[dict] = []
+        for file in sorted(self.dir.glob("*.json")):
+            if file.name == "index.json" or file.name.endswith(".bak.json"):
+                continue
+            if not _ID_RE.fullmatch(file.stem):
+                continue
+            try:
+                data = json.loads(file.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            if not isinstance(data, dict):
+                continue
+            meta = data.get("meta") if isinstance(data.get("meta"), dict) else {}
+            items.append(
+                {
+                    "id": file.stem,
+                    "name": _name_from(data, "未命名简历"),
+                    "createdAt": str(meta.get("createdAt") or ""),
+                    "updatedAt": str(meta.get("updatedAt") or ""),
+                }
+            )
+        return items
 
     def _write_index(self, data: dict) -> None:
         self.dir.mkdir(parents=True, exist_ok=True)
@@ -65,10 +116,10 @@ class ResumeStore:
         os.replace(temporary, self.index_file)
 
     def _file(self, resume_id: str) -> Path:
-        return self.dir / f"{resume_id}.json"
+        return self.dir / f"{_check_id(resume_id)}.json"
 
     def _backup_file(self, resume_id: str) -> Path:
-        return self.dir / f"{resume_id}.bak.json"
+        return self.dir / f"{_check_id(resume_id)}.bak.json"
 
     def _unique_name(self, base: str, items: list[dict]) -> str:
         names = {str(item.get("name") or "") for item in items}
@@ -167,23 +218,35 @@ class ResumeStore:
             raise StoreError("找不到该简历")
         try:
             data = json.loads(file.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+            if not isinstance(data, dict):
+                raise ValueError("resume is not an object")
+        except (OSError, json.JSONDecodeError, ValueError):
             backup = self._backup_file(resume_id)
             if backup.exists():
                 try:
                     data = json.loads(backup.read_text(encoding="utf-8"))
-                except (OSError, json.JSONDecodeError) as exc:
+                    if not isinstance(data, dict):
+                        raise ValueError("resume is not an object")
+                except (OSError, json.JSONDecodeError, ValueError) as exc:
                     raise StoreError("简历数据已损坏") from exc
-                self._write_resume(resume_id, data)
+                # 用备份恢复时不覆盖备份，避免损坏数据污染存档
+                self._write_resume(resume_id, data, backup=False)
             else:
                 raise StoreError("简历数据已损坏")
         data["id"] = resume_id
         return data
 
-    def _write_resume(self, resume_id: str, data: dict) -> None:
+    @staticmethod
+    def _valid_file(file: Path) -> bool:
+        try:
+            return isinstance(json.loads(file.read_text(encoding="utf-8")), dict)
+        except (OSError, json.JSONDecodeError):
+            return False
+
+    def _write_resume(self, resume_id: str, data: dict, backup: bool = True) -> None:
         payload = json.dumps(data, ensure_ascii=False, indent=2)
         file = self._file(resume_id)
-        if file.exists():
+        if backup and file.exists() and self._valid_file(file):
             try:
                 shutil.copyfile(file, self._backup_file(resume_id))
             except OSError:
@@ -198,21 +261,41 @@ class ResumeStore:
 
     def load(self, resume_id: str | None = None) -> dict:
         with self._lock:
-            rid = resume_id or self._read_index()["activeId"]
+            index = self._read_index()
+            rid = _check_id(resume_id) if resume_id else index["activeId"]
             try:
                 return self._read_resume(rid)
             except StoreError:
                 if resume_id:
                     raise
-                data = sample_resume()
-                data["id"] = rid
-                self._write_resume(rid, data)
-                return data
+                # 当前简历不可读时切换到其他可读简历，避免用示例数据覆盖用户内容
+                for item in index["items"]:
+                    if item["id"] == rid:
+                        continue
+                    try:
+                        data = self._read_resume(item["id"])
+                    except StoreError:
+                        continue
+                    index["activeId"] = item["id"]
+                    try:
+                        self._write_index(index)
+                    except OSError:
+                        pass
+                    return data
+                raise StoreError("简历数据已损坏，请从 data/backups 恢复") from None
 
     def save(self, data: dict, resume_id: str | None = None) -> str:
         with self._lock:
             index = self._read_index()
-            rid = resume_id or str(data.get("id") or index["activeId"])
+            if resume_id:
+                rid = _check_id(resume_id)
+            else:
+                candidate = str(data.get("id") or "").strip()
+                rid = (
+                    candidate
+                    if _ID_RE.fullmatch(candidate)
+                    else f"resume_{datetime.now().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex[:4]}"
+                )
             if rid not in {item["id"] for item in index["items"]}:
                 now = _stamp()
                 index["items"].append(
@@ -269,18 +352,23 @@ class ResumeStore:
 
     def delete(self, resume_id: str) -> str:
         with self._lock:
+            rid = _check_id(resume_id)
             index = self._read_index()
             if len(index["items"]) <= 1:
                 raise StoreError("至少需要保留一份简历")
-            remaining = [item for item in index["items"] if item["id"] != resume_id]
+            remaining = [item for item in index["items"] if item["id"] != rid]
             if len(remaining) == len(index["items"]):
                 raise StoreError("找不到该简历")
             index["items"] = remaining
-            if index["activeId"] == resume_id:
+            if index["activeId"] == rid:
                 index["activeId"] = remaining[0]["id"]
-            self._file(resume_id).unlink(missing_ok=True)
-            self._backup_file(resume_id).unlink(missing_ok=True)
+            # 先落盘索引，再清理文件；文件残留不影响使用，索引丢失才致命
             self._write_index(index)
+            for path in (self._file(rid), self._backup_file(rid)):
+                try:
+                    path.unlink(missing_ok=True)
+                except OSError:
+                    pass
             return index["activeId"]
 
     # ---------- 导入导出与快照 ----------

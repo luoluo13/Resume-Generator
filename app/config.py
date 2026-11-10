@@ -19,6 +19,9 @@ RESUMES_DIR = DATA_DIR / "resumes"
 CHATS_DIR = DATA_DIR / "chats"
 FRONTEND_DIST = ROOT / "frontend" / "dist"
 
+# 无论通过 run.bat 还是直接启动服务，浏览器内核都固定使用项目内目录，避免写入用户目录
+os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(RUNTIME_DIR / "ms-playwright"))
+
 
 def ensure_dirs() -> None:
     for folder in (

@@ -36,21 +36,34 @@ def _read(session_id: str) -> dict:
         raise ChatStoreError("会话记录已损坏") from exc
     if not isinstance(data, dict) or data.get("id") != session_id:
         raise ChatStoreError("会话记录已损坏")
-    data.setdefault("messages", [])
+    messages = data.get("messages")
+    data["messages"] = [item for item in messages if isinstance(item, dict)] if isinstance(messages, list) else []
     return data
 
 
 def _write(data: dict) -> None:
     file = _path(data["id"])
     temporary = file.with_suffix(".tmp")
-    temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-    os.replace(temporary, file)
+    try:
+        temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        os.replace(temporary, file)
+    except OSError as exc:
+        raise ChatStoreError("会话记录保存失败，请检查磁盘空间") from exc
+    finally:
+        try:
+            temporary.unlink(missing_ok=True)
+        except OSError:
+            pass
 
 
 def _summary(session: dict) -> dict:
-    messages = session.get("messages", [])
+    messages = session.get("messages")
+    if not isinstance(messages, list):
+        messages = []
     preview = ""
     for message in reversed(messages):
+        if not isinstance(message, dict):
+            continue
         content = str(message.get("content") or "").strip()
         if content:
             preview = " ".join(content.split())[:48]

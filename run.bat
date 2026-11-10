@@ -12,6 +12,9 @@ set "LOG=%RUNTIME%\logs\bootstrap.log"
 set "MIRROR=https://pypi.tuna.tsinghua.edu.cn/simple"
 set "PY_MIRROR=https://registry.npmmirror.com/-/binary/python/3.12.10/python-3.12.10-amd64.exe"
 set "PY_OFFICIAL=https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe"
+set "EMBED_MIRROR=https://registry.npmmirror.com/-/binary/python/3.12.10/python-3.12.10-embed-amd64.zip"
+set "EMBED_OFFICIAL=https://www.python.org/ftp/python/3.12.10/python-3.12.10-embed-amd64.zip"
+set "GETPIP_OFFICIAL=https://bootstrap.pypa.io/get-pip.py"
 set "PLAYWRIGHT_MIRROR=https://registry.npmmirror.com/-/binary/playwright"
 set "PORT=8765"
 
@@ -58,6 +61,7 @@ if not exist "%ROOT%\frontend\dist\index.html" (
 
 echo [5/5] 启动本地服务...
 call :pick_port
+if errorlevel 1 goto :fail
 >"%RUNTIME%\runtime.json" echo {"port": %PORT%}
 set "RESUME_PORT=%PORT%"
 start "简历工坊 - 请勿关闭此窗口" cmd /k ""%PY%" -m uvicorn app.main:app --host 127.0.0.1 --port %PORT%"
@@ -79,10 +83,34 @@ popd
 exit /b 0
 
 :ensure_python
+if exist "%RUNTIME%\portable-python.flag" (
+  set "PORTABLE_OK="
+  if exist "%RUNTIME%\python\python.exe" (
+    "%RUNTIME%\python\python.exe" -c "import sys; sys.exit(0 if sys.version_info[:2]==(3,12) and sys.maxsize>2**32 else 1)" >nul 2>&1
+    if not errorlevel 1 (
+      "%RUNTIME%\python\python.exe" -m pip --version >nul 2>&1
+      if not errorlevel 1 set "PORTABLE_OK=1"
+    )
+  )
+  if defined PORTABLE_OK (
+    set "PY=%RUNTIME%\python\python.exe"
+    goto :python_ready_portable
+  )
+  echo    免安装版 Python 已损坏，正在重新安装...
+  del /f /q "%RUNTIME%\portable-python.flag" >nul 2>&1
+  rd /s /q "%RUNTIME%\python" >nul 2>&1
+  call :install_portable
+  if errorlevel 1 exit /b 1
+  set "PY=%RUNTIME%\python\python.exe"
+  goto :python_ready_portable
+)
 set "VENV_OK="
 if exist "%PY%" (
-  "%PY%" -c "import sys,pathlib; sys.exit(0 if sys.version_info[:2]==(3,12) and pathlib.Path(sys.prefix).resolve()==pathlib.Path(r'%VENV%').resolve() else 1)" >nul 2>&1
-  if not errorlevel 1 set "VENV_OK=1"
+  "%PY%" -c "import sys,pathlib; sys.exit(0 if sys.version_info[:2]==(3,12) and sys.maxsize>2**32 and pathlib.Path(sys.prefix).resolve()==pathlib.Path(r'%VENV%').resolve() else 1)" >nul 2>&1
+  if not errorlevel 1 (
+    "%PY%" -m pip --version >nul 2>&1
+    if not errorlevel 1 set "VENV_OK=1"
+  )
 )
 if defined VENV_OK goto :python_ready
 if exist "%PY%" (
@@ -93,28 +121,42 @@ if exist "%PY%" (
 )
 set "SYSPY="
 if exist "%RUNTIME%\python\python.exe" (
-  "%RUNTIME%\python\python.exe" -c "import sys; sys.exit(0 if sys.version_info[:2]==(3,12) else 1)" >nul 2>&1
+  "%RUNTIME%\python\python.exe" -c "import sys; sys.exit(0 if sys.version_info[:2]==(3,12) and sys.maxsize>2**32 else 1)" >nul 2>&1
   if not errorlevel 1 (
-    set "SYSPY="%RUNTIME%\python\python.exe""
+    "%RUNTIME%\python\python.exe" -c "import venv" >nul 2>&1
+    if not errorlevel 1 (
+      set "SYSPY="%RUNTIME%\python\python.exe""
+    ) else (
+      "%RUNTIME%\python\python.exe" -m pip --version >nul 2>&1
+      if not errorlevel 1 (
+        echo    检测到可用的免安装版 Python，直接使用
+        >"%RUNTIME%\portable-python.flag" echo portable
+        set "PY=%RUNTIME%\python\python.exe"
+        goto :python_ready_portable
+      ) else (
+        echo    项目内置 Python 缺少必要组件，正在重新安装...
+        rd /s /q "%RUNTIME%\python" >nul 2>&1
+      )
+    )
   ) else (
     echo    项目内置 Python 版本不兼容，正在重新安装...
     rd /s /q "%RUNTIME%\python" >nul 2>&1
   )
 )
 if not defined SYSPY (
-  py -3.12 -c "import sys; sys.exit(0 if sys.version_info[:2]==(3,12) else 1)" >nul 2>&1
+  py -3.12 -c "import sys,venv,ensurepip; sys.exit(0 if sys.version_info[:2]==(3,12) and sys.maxsize>2**32 else 1)" >nul 2>&1
   if not errorlevel 1 (
     set "SYSPY=py -3.12"
     echo    使用系统 Python 3.12
   )
 )
 if not defined SYSPY (
-  python -c "import sys; sys.exit(0 if sys.version_info[:2]==(3,12) else 1)" >nul 2>&1
+  python -c "import sys,venv,ensurepip; sys.exit(0 if sys.version_info[:2]==(3,12) and sys.maxsize>2**32 else 1)" >nul 2>&1
   if not errorlevel 1 (
     set "SYSPY=python"
     echo    使用系统 Python 3.12
   ) else (
-    where python >nul 2>&1 && echo    检测到系统 Python 版本不符合要求（需要 3.12），已忽略
+    where python >nul 2>&1 && echo    检测到系统 Python 版本不符合要求（需要 64 位 3.12），已忽略
   )
 )
 if not defined SYSPY (
@@ -139,12 +181,26 @@ if not defined SYSPY (
   )
   "!INSTALLER!" /quiet InstallAllUsers=0 TargetDir="%RUNTIME%\python" Include_pip=1 Include_launcher=0 PrependPath=0 Shortcuts=0 Include_test=0
   if not exist "%RUNTIME%\python\python.exe" (
-    echo    [错误] Python 静默安装失败，可能被杀毒软件拦截。
-    exit /b 1
+    echo    官方安装器未生效（系统安装状态可能异常），改用免安装版...
+    echo    [%date% %time%] msi install noop, use portable >>"%LOG%"
+    call :install_portable
+    if errorlevel 1 exit /b 1
+    del /f /q "!INSTALLER!" >nul 2>&1
+    set "PY=%RUNTIME%\python\python.exe"
+    goto :python_ready_portable
   )
   set "SYSPY="%RUNTIME%\python\python.exe""
+  if exist "!INSTALLER!" del /f /q "!INSTALLER!" >nul 2>&1
 )
 if not exist "%PY%" (
+  if exist "%VENV%" (
+    echo    检测到残留的虚拟环境目录，正在清理...
+    rd /s /q "%VENV%" >nul 2>&1
+    if exist "%VENV%" (
+      echo    [错误] 无法清理残留的 .venv，请手动删除该目录后重试。
+      exit /b 1
+    )
+  )
   echo    正在创建虚拟环境 .venv ...
   echo    [%date% %time%] create venv >>"%LOG%"
   %SYSPY% -m venv "%VENV%" >>"%LOG%" 2>&1
@@ -156,7 +212,16 @@ if not exist "%PY%" (
   if exist "%RUNTIME%\playwright.ok" del /f /q "%RUNTIME%\playwright.ok"
 )
 :python_ready
-"%PY%" -m ensurepip --upgrade >nul 2>&1
+"%PY%" -m pip --version >nul 2>&1
+if not errorlevel 1 exit /b 0
+echo    检测到 pip 异常，正在修复...
+"%PY%" -m ensurepip --upgrade >>"%LOG%" 2>&1
+"%PY%" -m pip --version >nul 2>&1
+if not errorlevel 1 exit /b 0
+echo    [错误] pip 修复失败，请查看日志：%LOG%
+exit /b 1
+
+:python_ready_portable
 exit /b 0
 
 :rebuild_venv
@@ -170,6 +235,65 @@ if errorlevel 1 (
 rd /s /q "%BROKEN%" >nul 2>&1
 if exist "%RUNTIME%\deps.sha256" del /f /q "%RUNTIME%\deps.sha256"
 if exist "%RUNTIME%\playwright.ok" del /f /q "%RUNTIME%\playwright.ok"
+exit /b 0
+
+:install_portable
+set "EMBED=%RUNTIME%\python-embed.zip"
+set "PYDIR=%RUNTIME%\python"
+if exist "%PYDIR%" rd /s /q "%PYDIR%" >nul 2>&1
+if exist "%EMBED%" del /f /q "%EMBED%"
+echo    正在从国内镜像下载免安装版 Python...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '!EMBED_MIRROR!' -OutFile '!EMBED!' -UseBasicParsing -TimeoutSec 300 } catch { exit 1 }"
+set "EMBED_OK="
+if exist "!EMBED!" for %%A in ("!EMBED!") do if %%~zA GEQ 10000000 set "EMBED_OK=1"
+if not defined EMBED_OK (
+  if exist "!EMBED!" del /f /q "!EMBED!"
+  echo    镜像下载失败或文件不完整，切换官方源重试...
+  powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '!EMBED_OFFICIAL!' -OutFile '!EMBED!' -UseBasicParsing -TimeoutSec 300 } catch { exit 1 }"
+  if exist "!EMBED!" for %%A in ("!EMBED!") do if %%~zA GEQ 10000000 set "EMBED_OK=1"
+)
+if not defined EMBED_OK (
+  if exist "!EMBED!" del /f /q "!EMBED!"
+  echo    [错误] 免安装版 Python 下载失败或文件不完整，请检查网络连接。
+  exit /b 1
+)
+echo    正在解压免安装版 Python...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ProgressPreference='SilentlyContinue'; try { Expand-Archive -LiteralPath '!EMBED!' -DestinationPath '!PYDIR!' -Force; exit 0 } catch { exit 1 }"
+if not exist "%PYDIR%\python.exe" (
+  echo    [错误] 免安装版 Python 解压失败，请查看日志。
+  exit /b 1
+)
+if not exist "%PYDIR%\Lib\site-packages" mkdir "%PYDIR%\Lib\site-packages" >nul 2>&1
+>"%PYDIR%\python312._pth" (
+  echo python312.zip
+  echo .
+  echo Lib\site-packages
+  echo import site
+)
+echo    正在初始化 pip...
+set "GETPIP=%RUNTIME%\get-pip.py"
+if exist "%GETPIP%" del /f /q "%GETPIP%"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '!GETPIP_OFFICIAL!' -OutFile '!GETPIP!' -UseBasicParsing -TimeoutSec 120 } catch { exit 1 }"
+if not exist "!GETPIP!" (
+  echo    [错误] pip 引导脚本下载失败，请检查网络连接。
+  exit /b 1
+)
+"%PYDIR%\python.exe" "!GETPIP!" --no-warn-script-location --index-url %MIRROR% >>"%LOG%" 2>&1
+if errorlevel 1 (
+  echo    镜像源初始化 pip 失败，切换官方源重试...
+  "%PYDIR%\python.exe" "!GETPIP!" --no-warn-script-location >>"%LOG%" 2>&1
+)
+"%PYDIR%\python.exe" -m pip --version >nul 2>&1
+if errorlevel 1 (
+  echo    [错误] pip 初始化失败，请查看日志：
+  echo    %LOG%
+  exit /b 1
+)
+if exist "!EMBED!" del /f /q "!EMBED!" >nul 2>&1
+if exist "!GETPIP!" del /f /q "!GETPIP!" >nul 2>&1
+if exist "%RUNTIME%\deps.sha256" del /f /q "%RUNTIME%\deps.sha256"
+if exist "%RUNTIME%\playwright.ok" del /f /q "%RUNTIME%\playwright.ok"
+>"%RUNTIME%\portable-python.flag" echo portable
 exit /b 0
 
 :ensure_deps
@@ -197,9 +321,8 @@ if exist "%RUNTIME%\pw.version" (
   set /p PW_VERSION=<"%RUNTIME%\pw.version"
   del /f /q "%RUNTIME%\pw.version"
 )
-set "CHROME_FOUND="
-for /d %%D in ("%PLAYWRIGHT_BROWSERS_PATH%\chromium-*") do set "CHROME_FOUND=1"
-if defined CHROME_FOUND (
+call :check_browsers
+if defined CHROME_FOUND if defined SHELL_FOUND (
   if exist "%RUNTIME%\playwright.ok" (
     set /p PW_OK=<"%RUNTIME%\playwright.ok"
     if "!PW_OK!"=="!PW_VERSION!" exit /b 0
@@ -213,12 +336,35 @@ if errorlevel 1 (
   echo    部分内核镜像缺失，切换官方源补齐...
   set "PLAYWRIGHT_DOWNLOAD_HOST="
   "%PY%" -m playwright install chromium >>"%LOG%" 2>&1
-  if errorlevel 1 (
-    echo    [错误] 浏览器内核下载失败，请检查网络后重新双击 run.bat。
-    exit /b 1
-  )
+)
+call :check_browsers
+if not defined CHROME_FOUND (
+  echo    [错误] 浏览器内核文件不完整，请检查网络后重新双击 run.bat。
+  exit /b 1
+)
+if not defined SHELL_FOUND (
+  echo    缺少无头浏览器内核，正在从官方源补齐...
+  set "PLAYWRIGHT_DOWNLOAD_HOST="
+  "%PY%" -m playwright install chromium >>"%LOG%" 2>&1
+  call :check_browsers
+)
+if not defined SHELL_FOUND (
+  echo    [错误] 无头浏览器内核缺失，PDF / PNG 导出将无法使用。
+  echo    请检查网络后重新双击 run.bat。
+  exit /b 1
 )
 if defined PW_VERSION >"%RUNTIME%\playwright.ok" echo !PW_VERSION!
+exit /b 0
+
+:check_browsers
+set "CHROME_FOUND="
+set "SHELL_FOUND="
+for /d %%D in ("%PLAYWRIGHT_BROWSERS_PATH%\chromium-*") do (
+  if exist "%%D\chrome-win\chrome.exe" set "CHROME_FOUND=1"
+)
+for /d %%D in ("%PLAYWRIGHT_BROWSERS_PATH%\chromium_headless_shell-*") do (
+  if exist "%%D\chrome-win\headless_shell.exe" set "SHELL_FOUND=1"
+)
 exit /b 0
 
 :pick_port

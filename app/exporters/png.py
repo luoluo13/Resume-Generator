@@ -32,7 +32,9 @@ def _split(image: Image.Image, base: Path) -> list[Path]:
 
 async def export_png(url: str, output: Path) -> list[Path]:
     async with browser_page(width=A4_WIDTH, height=A4_HEIGHT, scale=SCALE) as page:
-        await page.goto(url, wait_until="networkidle")
+        response = await page.goto(url, wait_until="networkidle")
+        if response is None or response.status >= 400:
+            raise RuntimeError(f"预览页加载失败（HTTP {response.status if response else '无响应'}）")
         await wait_for_document(page)
         await page.add_style_tag(content=".page::after{display:none !important}.page{box-shadow:none !important}")
         element = await page.query_selector(".page")

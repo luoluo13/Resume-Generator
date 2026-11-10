@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.config import DATA_DIR, FRONTEND_DIST, VERSION, ensure_dirs, runtime_port
+from app.config import ASSETS_DIR, FRONTEND_DIST, VERSION, ensure_dirs, runtime_port
 from app.routers import assets, chat, export, resume, resumes, settings, system, templates
 
 ensure_dirs()
@@ -20,7 +20,7 @@ app.include_router(assets.router)
 app.include_router(templates.router)
 app.include_router(export.router)
 
-app.mount("/media", StaticFiles(directory=str(DATA_DIR)), name="media")
+app.mount("/media/assets", StaticFiles(directory=str(ASSETS_DIR)), name="media")
 
 PORT = runtime_port()
 
@@ -51,7 +51,8 @@ def spa(full_path: str):
             "<p>请先运行 build_frontend.bat 构建前端，或使用完整发布包。</p>",
             status_code=503,
         )
-    candidate = (FRONTEND_DIST / full_path).resolve()
-    if full_path and candidate.is_file() and str(candidate).startswith(str(FRONTEND_DIST.resolve())):
+    root = FRONTEND_DIST.resolve()
+    candidate = (root / full_path).resolve()
+    if full_path and candidate.is_file() and candidate.is_relative_to(root):
         return FileResponse(candidate)
     return FileResponse(FRONTEND_DIST / "index.html")

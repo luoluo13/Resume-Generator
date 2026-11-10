@@ -87,10 +87,13 @@ def save_ai(patch: dict[str, Any]) -> dict[str, Any]:
 
     data = _read()
     data["ai"] = ai
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    temporary = SETTINGS_FILE.with_suffix(".json.tmp")
-    temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-    temporary.replace(SETTINGS_FILE)
+    try:
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        temporary = SETTINGS_FILE.with_suffix(".json.tmp")
+        temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        temporary.replace(SETTINGS_FILE)
+    except OSError as exc:
+        raise SettingsError("配置保存失败，请检查磁盘空间或文件权限") from exc
     return ai
 
 

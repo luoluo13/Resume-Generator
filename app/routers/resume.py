@@ -16,13 +16,19 @@ MAX_IMPORT_BYTES = 5 * 1024 * 1024
 
 @router.get("")
 def read_resume() -> dict:
-    return store.load()
+    try:
+        return store.load()
+    except StoreError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.put("")
 def save_resume(payload: Resume) -> dict:
     data = payload.model_dump(mode="json")
-    return {"savedAt": store.save(data)}
+    try:
+        return {"savedAt": store.save(data)}
+    except StoreError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.post("/import")

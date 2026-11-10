@@ -28,7 +28,12 @@ def chromium_ready() -> bool:
     root = RUNTIME_DIR / "ms-playwright"
     if not root.exists():
         return False
-    return any(path.is_dir() for path in root.glob("chromium-*"))
+    full = any((path / "chrome-win" / "chrome.exe").is_file() for path in root.glob("chromium-*"))
+    shell = any(
+        (path / "chrome-win" / "headless_shell.exe").is_file()
+        for path in root.glob("chromium_headless_shell-*")
+    )
+    return full and shell
 
 
 class ExportService:
@@ -50,7 +55,7 @@ class ExportService:
         if not photo:
             return None
         path = (self.data_dir / photo).resolve()
-        if path.is_file() and str(path).startswith(str(self.data_dir.resolve())):
+        if path.is_file() and path.is_relative_to(self.data_dir.resolve()):
             return path
         return None
 

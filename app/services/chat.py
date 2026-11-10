@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import copy
 import json
 import re
@@ -969,7 +970,7 @@ async def run_chat(history: Any, message: str, base_url: str, resume_id: str) ->
     reply = ""
     try:
         for _ in range(MAX_TOOL_ROUNDS):
-            message_data = _completion(config, messages, tools)
+            message_data = await asyncio.to_thread(_completion, config, messages, tools)
             content = message_data.get("content") or ""
             tool_calls = message_data.get("tool_calls") or []
             if not tool_calls:
