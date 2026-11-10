@@ -10,6 +10,9 @@ set "VENV=%ROOT%\.venv"
 set "PY=%VENV%\Scripts\python.exe"
 set "LOG=%RUNTIME%\logs\bootstrap.log"
 set "MIRROR=https://pypi.tuna.tsinghua.edu.cn/simple"
+set "PY_MIRROR=https://registry.npmmirror.com/-/binary/python/3.12.10/python-3.12.10-amd64.exe"
+set "PY_OFFICIAL=https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe"
+set "PLAYWRIGHT_MIRROR=https://registry.npmmirror.com/-/binary/playwright"
 set "PORT=8765"
 
 if not exist "%RUNTIME%" mkdir "%RUNTIME%"
@@ -98,12 +101,23 @@ if not defined SYSPY (
   echo    未检测到 Python，正在下载并安装到本目录 .runtime\python ...
   echo    [%date% %time%] download python >>"%LOG%"
   set "INSTALLER=%RUNTIME%\python-installer.exe"
-  powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe' -OutFile '%INSTALLER%' -UseBasicParsing"
-  if not exist "%INSTALLER%" (
+  if exist "!INSTALLER!" del /f /q "!INSTALLER!"
+  echo    正在从国内镜像下载 Python 安装包...
+  powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '!PY_MIRROR!' -OutFile '!INSTALLER!' -UseBasicParsing -TimeoutSec 300 } catch { exit 1 }"
+  if not exist "!INSTALLER!" (
+    echo    镜像下载失败，切换官方源重试...
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '!PY_OFFICIAL!' -OutFile '!INSTALLER!' -UseBasicParsing -TimeoutSec 300 } catch { exit 1 }"
+  )
+  if not exist "!INSTALLER!" (
     echo    [错误] Python 安装包下载失败，请检查网络连接。
     exit /b 1
   )
-  "%INSTALLER%" /quiet InstallAllUsers=0 TargetDir="%RUNTIME%\python" Include_pip=1 Include_launcher=0 PrependPath=0 Shortcuts=0 Include_test=0
+  for %%A in ("!INSTALLER!") do if %%~zA LSS 20000000 (
+    echo    [错误] Python 安装包不完整（文件过小），请检查网络后重试。
+    del /f /q "!INSTALLER!"
+    exit /b 1
+  )
+  "!INSTALLER!" /quiet InstallAllUsers=0 TargetDir="%RUNTIME%\python" Include_pip=1 Include_launcher=0 PrependPath=0 Shortcuts=0 Include_test=0
   if not exist "%RUNTIME%\python\python.exe" (
     echo    [错误] Python 静默安装失败，可能被杀毒软件拦截。
     exit /b 1
@@ -118,6 +132,7 @@ if not exist "%PY%" (
     echo    [错误] 虚拟环境创建失败，请查看日志。
     exit /b 1
   )
+  if exist "%RUNTIME%\deps.sha256" del /f /q "%RUNTIME%\deps.sha256"
 )
 :python_ready
 "%PY%" -m ensurepip --upgrade >nul 2>&1
@@ -149,10 +164,16 @@ if defined CHROME_FOUND (
 )
 echo    正在下载浏览器内核，首次可能需要几分钟...
 echo    [%date% %time%] playwright install >>"%LOG%"
+set "PLAYWRIGHT_DOWNLOAD_HOST=%PLAYWRIGHT_MIRROR%"
 "%PY%" -m playwright install chromium >>"%LOG%" 2>&1
 if errorlevel 1 (
-  echo    [错误] 浏览器内核下载失败，请检查网络后重新双击 run.bat。
-  exit /b 1
+  echo    部分内核镜像缺失，切换官方源补齐...
+  set "PLAYWRIGHT_DOWNLOAD_HOST="
+  "%PY%" -m playwright install chromium >>"%LOG%" 2>&1
+  if errorlevel 1 (
+    echo    [错误] 浏览器内核下载失败，请检查网络后重新双击 run.bat。
+    exit /b 1
+  )
 )
 >"%RUNTIME%\playwright.ok" echo ok
 exit /b 0
