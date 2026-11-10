@@ -79,42 +79,62 @@ popd
 exit /b 0
 
 :ensure_python
+set "VENV_OK="
 if exist "%PY%" (
-  "%PY%" -c "import sys; sys.exit(0 if sys.version_info>=(3,10) else 1)" >nul 2>&1
-  if not errorlevel 1 goto :python_ready
+  "%PY%" -c "import sys,pathlib; sys.exit(0 if sys.version_info[:2]==(3,12) and pathlib.Path(sys.prefix).resolve()==pathlib.Path(r'%VENV%').resolve() else 1)" >nul 2>&1
+  if not errorlevel 1 set "VENV_OK=1"
+)
+if defined VENV_OK goto :python_ready
+if exist "%PY%" (
+  echo    检测到虚拟环境版本不兼容或已损坏，正在自动重建...
+  echo    [%date% %time%] venv invalid, rebuild >>"%LOG%"
+  call :rebuild_venv
+  if errorlevel 1 exit /b 1
 )
 set "SYSPY="
-if exist "%RUNTIME%\python\python.exe" set "SYSPY=%RUNTIME%\python\python.exe"
-if not defined SYSPY (
-  py -3.12 -c "import sys" >nul 2>&1 && set "SYSPY=py -3.12"
+if exist "%RUNTIME%\python\python.exe" (
+  "%RUNTIME%\python\python.exe" -c "import sys; sys.exit(0 if sys.version_info[:2]==(3,12) else 1)" >nul 2>&1
+  if not errorlevel 1 (
+    set "SYSPY="%RUNTIME%\python\python.exe""
+  ) else (
+    echo    项目内置 Python 版本不兼容，正在重新安装...
+    rd /s /q "%RUNTIME%\python" >nul 2>&1
+  )
 )
 if not defined SYSPY (
-  py -3.11 -c "import sys" >nul 2>&1 && set "SYSPY=py -3.11"
+  py -3.12 -c "import sys; sys.exit(0 if sys.version_info[:2]==(3,12) else 1)" >nul 2>&1
+  if not errorlevel 1 (
+    set "SYSPY=py -3.12"
+    echo    使用系统 Python 3.12
+  )
 )
 if not defined SYSPY (
-  py -3.10 -c "import sys" >nul 2>&1 && set "SYSPY=py -3.10"
+  python -c "import sys; sys.exit(0 if sys.version_info[:2]==(3,12) else 1)" >nul 2>&1
+  if not errorlevel 1 (
+    set "SYSPY=python"
+    echo    使用系统 Python 3.12
+  ) else (
+    where python >nul 2>&1 && echo    检测到系统 Python 版本不符合要求（需要 3.12），已忽略
+  )
 )
 if not defined SYSPY (
-  python -c "import sys; sys.exit(0 if sys.version_info>=(3,10) else 1)" >nul 2>&1 && set "SYSPY=python"
-)
-if not defined SYSPY (
-  echo    未检测到 Python，正在下载并安装到本目录 .runtime\python ...
+  echo    未找到兼容的 Python 3.12，正在下载并安装到本目录 .runtime\python ...
   echo    [%date% %time%] download python >>"%LOG%"
   set "INSTALLER=%RUNTIME%\python-installer.exe"
   if exist "!INSTALLER!" del /f /q "!INSTALLER!"
   echo    正在从国内镜像下载 Python 安装包...
   powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '!PY_MIRROR!' -OutFile '!INSTALLER!' -UseBasicParsing -TimeoutSec 300 } catch { exit 1 }"
-  if not exist "!INSTALLER!" (
-    echo    镜像下载失败，切换官方源重试...
+  set "INSTALLER_OK="
+  if exist "!INSTALLER!" for %%A in ("!INSTALLER!") do if %%~zA GEQ 20000000 set "INSTALLER_OK=1"
+  if not defined INSTALLER_OK (
+    if exist "!INSTALLER!" del /f /q "!INSTALLER!"
+    echo    镜像下载失败或文件不完整，切换官方源重试...
     powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '!PY_OFFICIAL!' -OutFile '!INSTALLER!' -UseBasicParsing -TimeoutSec 300 } catch { exit 1 }"
+    if exist "!INSTALLER!" for %%A in ("!INSTALLER!") do if %%~zA GEQ 20000000 set "INSTALLER_OK=1"
   )
-  if not exist "!INSTALLER!" (
-    echo    [错误] Python 安装包下载失败，请检查网络连接。
-    exit /b 1
-  )
-  for %%A in ("!INSTALLER!") do if %%~zA LSS 20000000 (
-    echo    [错误] Python 安装包不完整（文件过小），请检查网络后重试。
-    del /f /q "!INSTALLER!"
+  if not defined INSTALLER_OK (
+    if exist "!INSTALLER!" del /f /q "!INSTALLER!"
+    echo    [错误] Python 安装包下载失败或文件不完整，请检查网络连接。
     exit /b 1
   )
   "!INSTALLER!" /quiet InstallAllUsers=0 TargetDir="%RUNTIME%\python" Include_pip=1 Include_launcher=0 PrependPath=0 Shortcuts=0 Include_test=0
@@ -122,7 +142,7 @@ if not defined SYSPY (
     echo    [错误] Python 静默安装失败，可能被杀毒软件拦截。
     exit /b 1
   )
-  set "SYSPY=%RUNTIME%\python\python.exe"
+  set "SYSPY="%RUNTIME%\python\python.exe""
 )
 if not exist "%PY%" (
   echo    正在创建虚拟环境 .venv ...
@@ -133,13 +153,27 @@ if not exist "%PY%" (
     exit /b 1
   )
   if exist "%RUNTIME%\deps.sha256" del /f /q "%RUNTIME%\deps.sha256"
+  if exist "%RUNTIME%\playwright.ok" del /f /q "%RUNTIME%\playwright.ok"
 )
 :python_ready
 "%PY%" -m ensurepip --upgrade >nul 2>&1
 exit /b 0
 
+:rebuild_venv
+set "BROKEN=%VENV%.broken"
+if exist "%BROKEN%" rd /s /q "%BROKEN%" >nul 2>&1
+move "%VENV%" "%BROKEN%" >nul 2>&1
+if errorlevel 1 (
+  echo    [错误] 无法重建虚拟环境，请先关闭正在运行的服务窗口后重试。
+  exit /b 1
+)
+rd /s /q "%BROKEN%" >nul 2>&1
+if exist "%RUNTIME%\deps.sha256" del /f /q "%RUNTIME%\deps.sha256"
+if exist "%RUNTIME%\playwright.ok" del /f /q "%RUNTIME%\playwright.ok"
+exit /b 0
+
 :ensure_deps
-"%PY%" -c "import hashlib,sys,pathlib; h=hashlib.sha256(pathlib.Path('requirements.txt').read_bytes()).hexdigest(); p=pathlib.Path(r'.runtime/deps.sha256'); sys.exit(0 if p.exists() and p.read_text().strip()==h else 1)"
+"%PY%" -c "import hashlib,sys,pathlib; h=hashlib.sha256(pathlib.Path('requirements.txt').read_bytes()).hexdigest(); t=sys.version.split()[0]+'|'+h; p=pathlib.Path(r'.runtime/deps.sha256'); sys.exit(0 if p.exists() and p.read_text().strip()==t else 1)"
 if not errorlevel 1 exit /b 0
 echo    正在安装依赖，首次可能需要几分钟...
 echo    [%date% %time%] pip install >>"%LOG%"
@@ -153,14 +187,23 @@ if errorlevel 1 (
     exit /b 1
   )
 )
-"%PY%" -c "import hashlib,pathlib; pathlib.Path(r'.runtime/deps.sha256').write_text(hashlib.sha256(pathlib.Path('requirements.txt').read_bytes()).hexdigest())"
+"%PY%" -c "import hashlib,sys,pathlib; h=hashlib.sha256(pathlib.Path('requirements.txt').read_bytes()).hexdigest(); pathlib.Path(r'.runtime/deps.sha256').write_text(sys.version.split()[0]+'|'+h)"
 exit /b 0
 
 :ensure_chromium
+set "PW_VERSION="
+"%PY%" -c "import importlib.metadata as m,pathlib; pathlib.Path(r'%RUNTIME%\pw.version').write_text(m.version('playwright'))" >nul 2>&1
+if exist "%RUNTIME%\pw.version" (
+  set /p PW_VERSION=<"%RUNTIME%\pw.version"
+  del /f /q "%RUNTIME%\pw.version"
+)
 set "CHROME_FOUND="
 for /d %%D in ("%PLAYWRIGHT_BROWSERS_PATH%\chromium-*") do set "CHROME_FOUND=1"
 if defined CHROME_FOUND (
-  if exist "%RUNTIME%\playwright.ok" exit /b 0
+  if exist "%RUNTIME%\playwright.ok" (
+    set /p PW_OK=<"%RUNTIME%\playwright.ok"
+    if "!PW_OK!"=="!PW_VERSION!" exit /b 0
+  )
 )
 echo    正在下载浏览器内核，首次可能需要几分钟...
 echo    [%date% %time%] playwright install >>"%LOG%"
@@ -175,7 +218,7 @@ if errorlevel 1 (
     exit /b 1
   )
 )
->"%RUNTIME%\playwright.ok" echo ok
+if defined PW_VERSION >"%RUNTIME%\playwright.ok" echo !PW_VERSION!
 exit /b 0
 
 :pick_port
